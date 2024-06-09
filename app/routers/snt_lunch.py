@@ -16,28 +16,38 @@ class LunchData(BaseModel):
 
 class LunchResponse(BaseModel):
     success: bool = Field(description="성공 여부", example=True)
-    data: LunchData = Field(description="급식 정보")
+    data: Optional[List[dict[str, str | List[str]]]] = Field(description="급식 정보")
+
 
 @router.get("", responses = {
-    200: {"model": LunchResponse,"description": "급식 정보 조회 성공"}, 400: {"model": ErrorResponse, "description": "급식 정보 조회 실패"}
+    200: {"model": LunchResponse,"description": "급식 정보 조회 성공"}, 
+    400: {"model": ErrorResponse, "description": "급식 정보 조회 실패"}
 })
 def lunch(
     month: int = Query(..., title="월", description="월", ge=1, le=12),
-    day: int = Query(..., title="일", description="일", ge=1, le=31)
+    day: Optional[int] = Query(None, title="일", description="일", ge=1, le=31)
 ) -> LunchResponse | ErrorResponse:
     try:
-        date = f"{datetime.now().year}{month:02d}{day:02d}"
-        url = f"https://open.neis.go.kr/hub/mealServiceDietInfo?key={os.getenv('NEIS_API_KEY')}&type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010536&MMEAL_SC_CODE=2&MLSV_YMD={date}"
+        if day is not None:
+            date = f"{datetime.now().year}{month:02d}{day:02d}"
+        else:
+            date = f"{datetime.now().year}{month:02d}"
+
+        url = f"https://open.neis.go.kr/hub/mealServiceDietInfo?key={os.environ['NEIS_API_KEY']}&type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010536&MMEAL_SC_CODE=2&MLSV_YMD={date}"
         response = get(url)
         data = response.json()
 
         if 'mealServiceDietInfo' not in data:
             return ErrorResponse(error=data['RESULT']['MESSAGE'])
+
+        results = []
+        for row in data['mealServiceDietInfo'][1]['row']:
+            menu = row['DDISH_NM']
+            result = {"date": row['MLSV_YMD'], "menu": [re.sub(r'\s*\([^)]*\)', '', item.strip()) for item in menu.split('<br/>')]} # 괄호 안 내용 및 공백 제거 후 리스트로 변환
+            
+            results.append(result)
         
-        menu = data['mealServiceDietInfo'][1]['row'][0]['DDISH_NM']
-        result = {"date": date, "menu": [re.sub(r'\s*\([^)]*\)', '', item.strip()) for item in menu.split('<br/>')]} # 괄호 안 내용 및 공백 제거 후 리스트로 변환
-        
-        return Response(data=result)
+        return LunchResponse(success=True, data=results)
         
     except Exception as e:
         return ErrorResponse(error=str(e))
