@@ -63,15 +63,21 @@ def send(
     try:
         subscribers = db.fetchall("SELECT token FROM slunch_noti")
         
-        for subscriber in subscribers:
-            print(f"Sending push notification to {subscriber['token']}")
-            message = messaging.Message(
-                data={"title": title, "body": body},
-                topic="lunch",
-                token=subscriber["token"]
-            )
-            messaging.send(message)
+        success, faild = 0, 0
 
-        return Response(data=f"{len(subscribers)}명에게 푸시 알림 전송 성공")
+        for subscriber in subscribers:
+            try:
+                message = messaging.Message(
+                    data={"title": title, "body": body},
+                    topic="lunch",
+                    token=subscriber["token"]
+                )
+                messaging.send(message)
+            except Exception as e:
+                faild += 1
+            else:
+                success += 1
+
+        return Response(data=f"푸시 알림 전송됨. 성공: {success}명, 실패: {faild}명, 전체 {len(subscribers)}명")
     except Exception as e:
         return ErrorResponse(error=str(e))
