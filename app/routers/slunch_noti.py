@@ -69,7 +69,6 @@ def send(
             try:
                 message = messaging.Message(
                     data={"title": title, "body": body},
-                    topic="lunch",
                     token=subscriber["token"]
                 )
                 messaging.send(message)
