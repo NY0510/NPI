@@ -6,10 +6,17 @@ from os import path
 import datetime
 
 from .responses import ErrorResponse, Response
-from app.libs.database import db
+from app.libs.database import Database
 
 router = APIRouter()
 firebase_admin.initialize_app(credentials.Certificate(path.join("app", "firebase-admin.json")))
+
+def get_db():
+    db = Database()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def localhost_only(request: Request):
     if not any(ip in request.client.host for ip in ["192.168","127.0.0.1"]):
@@ -21,9 +28,10 @@ def localhost_only(request: Request):
 })
 def subscribe(
     token: str = Query(..., title="토큰", description="FCM 토큰"),
+    db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
     try:
-        db.execute("INSERT INTO slunch_noti (token) VALUES (%s)", (token,))
+        db.execute("INSERT INTO slunch_noti (token) VALUES (?)", (token,))
         return Response(data="구독 성공")
     except Exception as e:
         return ErrorResponse(error=str(e))
@@ -34,13 +42,14 @@ def subscribe(
 })
 def unsubscribe(
     token: str = Query(..., title="토큰", description="FCM 토큰"),
+    db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
     try:
-        db.execute("DELETE FROM slunch_noti WHERE token = %s", (token,))
+        db.execute("DELETE FROM slunch_noti WHERE token = ?", (token,))
         return Response(data="구독 해지 성공")
     except Exception as e:
         return ErrorResponse(error=str(e))
-
+        
 @router.get("/send", dependencies=[Depends(localhost_only)], responses={
     200: {"model": Response, "description": "푸시 알림 전송 성공"},
     400: {"model": ErrorResponse, "description": "푸시 알림 전송 실패"},
@@ -49,21 +58,20 @@ def unsubscribe(
 def send(
     title: str = Query(..., title="제목", description="푸시 알림 제목"),
     body: str = Query(..., title="내용", description="푸시 알림 내용"),
+    db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
     try:
-        notiPayload = messaging.Message(
-            # notdataification=messaging.Notification(
-            #     title=title,
-            #     body=body
-            # ),
-            data={
-                "title": title,
-                "body": body
-            },
-            topic="lunch",
-            # token=''
-        )
-        messaging.send(notiPayload)
-        return Response(data="푸시 알림 전송 성공")
+        subscribers = db.fetchall("SELECT token FROM slunch_subscribers")
+        
+        for subscriber in subscribers:
+            print(f"Sending push notification to {subscriber['token']}")
+            message = messaging.Message(
+                data={"title": title, "body": body},
+                topic="lunch",
+                token=subscriber["token"]
+            )
+            messaging.send(message)
+
+        return Response(data=f"{len(subscribers)}명에게 푸시 알림 전송 성공")
     except Exception as e:
         return ErrorResponse(error=str(e))

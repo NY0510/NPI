@@ -1,8 +1,10 @@
 import sqlite3
 import os
 
+DB_NAME = os.path.join("app", 'database', 'db.sqlite3')
+
 class Database:
-    def __init__(self, db_name):
+    def __init__(self, db_name = DB_NAME):
         db_path = os.path.join(os.getcwd(), db_name)
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row 
@@ -10,19 +12,22 @@ class Database:
 
     def execute(self, query, params=None):
         cursor = self.conn.cursor()
-        cursor.execute(query, params)
+        if params is not None:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
         self.conn.commit()
         return cursor
-
-    def fetch_all(self, query, params=None):
-        cursor = self.execute_query(query, params)
+        
+    def fetchall(self, query, params=None):
+        cursor = self.execute(query, params)
         return cursor.fetchall()
 
-    def fetch_one(self, query, params=None):
-        cursor = self.execute_query(query, params)
+    def fetchone(self, query, params=None):
+        cursor = self.execute(query, params)
         return cursor.fetchone()
 
     def close(self):
         self.conn.close()
 
-db = Database(os.path.join('app', 'database', 'db.sqlite3'))
+
