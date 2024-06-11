@@ -2,14 +2,14 @@ from fastapi import APIRouter, Query, Request, HTTPException, Depends
 from pydantic import BaseModel, Field
 import firebase_admin
 from firebase_admin import credentials, messaging
-from os import path
+import os
 import datetime
 
 from .responses import ErrorResponse, Response
 from app.libs.database import Database
 
 router = APIRouter()
-firebase_admin.initialize_app(credentials.Certificate(path.join("app", "firebase-admin.json")))
+firebase_admin.initialize_app(credentials.Certificate(os.path.join("app", "firebase-admin.json")))
 
 def get_db():
     db = Database()
