@@ -61,7 +61,7 @@ def send(
     db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
     try:
-        subscribers = db.fetchall("SELECT token FROM slunch_subscribers")
+        subscribers = db.fetchall("SELECT token FROM slunch_noti")
         
         for subscriber in subscribers:
             print(f"Sending push notification to {subscriber['token']}")
