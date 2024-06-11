@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 import firebase_admin
 from firebase_admin import credentials, messaging
 from os import path
+import datetime
 
 from .responses import ErrorResponse, Response
 from app.libs.database import db
@@ -51,11 +52,16 @@ def send(
 ) -> Response | ErrorResponse:
     try:
         notiPayload = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            topic="lunch"
+            # notdataification=messaging.Notification(
+            #     title=title,
+            #     body=body
+            # ),
+            data={
+                "title": title,
+                "body": body
+            },
+            topic="lunch",
+            # token=''
         )
         messaging.send(notiPayload)
         return Response(data="푸시 알림 전송 성공")
