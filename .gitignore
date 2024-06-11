@@ -36,3 +36,5 @@ __pycache__/
 /.pytype
 /.pyright
 .DS_Store
+firebase-admin.json
+*.sqlite3
