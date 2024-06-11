@@ -19,7 +19,9 @@ def get_db():
         db.close()
 
 def localhost_only(request: Request):
-    if not any(ip in request.client.host for ip in ["192.168","127.0.0.1"]):
+    secret_key = os.environ["SECRET_KEY"]
+    header_key = request.headers.get("X-Secret-Key")
+    if header_key != secret_key:
         raise HTTPException(status_code=403, detail="Not authorized")
 
 @router.get("/subscribe", responses={
