@@ -11,7 +11,7 @@ router = APIRouter()
 firebase_admin.initialize_app(credentials.Certificate(path.join("app", "firebase-admin.json")))
 
 def localhost_only(request: Request):
-    if "192.168" not in request.client.host:
+    if ["192.168","127.0.0.1"] not in request.client.host:
         raise HTTPException(status_code=403, detail="Not authorized")
 
 @router.get("/subscribe", responses={
