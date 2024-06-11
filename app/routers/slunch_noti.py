@@ -65,9 +65,6 @@ def send(
     notification: PushNotification = Body(...),
     db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
-    if not title or not body:
-        raise ErrorResponse(error="제목과 내용을 입력해주세요.")
-
     try:
         subscribers = db.fetchall("SELECT token FROM slunch_noti")
         
