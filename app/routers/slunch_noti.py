@@ -11,6 +11,10 @@ from app.libs.database import Database
 router = APIRouter()
 firebase_admin.initialize_app(credentials.Certificate(os.path.join("app", "firebase-admin.json")))
 
+class PushNotification(BaseModel):
+    title: str
+    body: str
+
 def get_db():
     db = Database()
     try:
@@ -58,8 +62,7 @@ def unsubscribe(
     403: {"model": ErrorResponse, "description": "허용되지 않은 IP 주소"}
 })
 def send(
-    title: str = Header(..., title="제목", description="푸시 알림 제목"),
-    body: str = Header(..., title="내용", description="푸시 알림 내용"),
+    notification: PushNotification = Body(...),
     db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
     if not title or not body:
@@ -73,7 +76,7 @@ def send(
         for subscriber in subscribers:
             try:
                 message = messaging.Message(
-                    data={"title": title, "body": body},
+                    data={"title": notification.title, "body": notification.body},
                     token=subscriber["token"]
                 )
                 messaging.send(message)
