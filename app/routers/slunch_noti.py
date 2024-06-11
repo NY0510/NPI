@@ -52,16 +52,19 @@ def unsubscribe(
     except Exception as e:
         return ErrorResponse(error=str(e))
         
-@router.get("/send", dependencies=[Depends(localhost_only)], responses={
+@router.post("/send", dependencies=[Depends(localhost_only)], responses={
     200: {"model": Response, "description": "푸시 알림 전송 성공"},
     400: {"model": ErrorResponse, "description": "푸시 알림 전송 실패"},
     403: {"model": ErrorResponse, "description": "허용되지 않은 IP 주소"}
 })
 def send(
-    title: str = Query(..., title="제목", description="푸시 알림 제목"),
-    body: str = Query(..., title="내용", description="푸시 알림 내용"),
+    title: str = Header(..., title="제목", description="푸시 알림 제목"),
+    body: str = Header(..., title="내용", description="푸시 알림 내용"),
     db: Database = Depends(get_db)
 ) -> Response | ErrorResponse:
+    if not title or not body:
+        raise ErrorResponse(error="제목과 내용을 입력해주세요.")
+
     try:
         subscribers = db.fetchall("SELECT token FROM slunch_noti")
         
