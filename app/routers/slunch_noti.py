@@ -76,6 +76,6 @@ def send(
         )
         messaging.send(message)
         
-        return Response(data=f"푸시 알림 전송됨")
+        return Response(data="푸시 알림 전송됨")
     except Exception as e:
         return ErrorResponse(error=str(e))
