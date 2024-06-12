@@ -72,17 +72,18 @@ def send(
             
             success, faild = 0, 0
 
-            for subscriber in subscribers:
-                try:
-                    message = messaging.Message(
-                        data={"title": notification.title, "body": notification.body},
-                        token=subscriber["token"]
-                    )
-                    messaging.send(message)
-                except Exception as e:
-                    faild += 1
-                else:
-                    success += 1
+#            for subscriber in subscribers:
+            try:
+                message = messaging.Message(
+                    data={"title": notification.title, "body": notification.body},
+#                        token=subscriber["token"]
+                    topic="lunch"
+                )
+                messaging.send(message)
+            except Exception as e:
+                faild += 1
+            else:
+                success += 1
 
             return Response(data=f"푸시 알림 전송됨. 성공: {success}명, 실패: {faild}명, 전체 {len(subscribers)}명")
         except Exception as e:
