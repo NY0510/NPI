@@ -53,8 +53,8 @@ def unsubscribe(
 ) -> Response | ErrorResponse:
    with get_db() as db:
         try:
-            db.execute("INSERT INTO slunch_noti (token) VALUES (?)", (token,))
-            return Response(data="구독 성공")
+            db.execute("DELETE FROM slunch_noti WHERE token=?", (token,))
+            return Response(data="구독 해지 성공")
         except Exception as e:
             return ErrorResponse(error=str(e))
         
