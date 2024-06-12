@@ -76,6 +76,6 @@ def send(
         )
         messaging.send(message)
         
-        return Response(data=f"푸시 알림 전송됨. 성공: {success}명, 실패: {faild}명, 전체 {len(subscribers)}명")
+        return Response(data=f"푸시 알림 전송됨")
     except Exception as e:
         return ErrorResponse(error=str(e))
