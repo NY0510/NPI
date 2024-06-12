@@ -66,25 +66,16 @@ def unsubscribe(
 def send(
     notification: PushNotification = Body(...),
 ) -> Response | ErrorResponse:
-    with get_db() as db:
-        try:
-            subscribers = db.fetchall("SELECT token FROM slunch_noti")
-            
-            success, faild = 0, 0
-
-#            for subscriber in subscribers:
-            try:
-                message = messaging.Message(
-                    data={"title": notification.title, "body": notification.body},
-#                        token=subscriber["token"]
-                    topic="lunch"
-                )
-                messaging.send(message)
-            except Exception as e:
-                faild += 1
-            else:
-                success += 1
-
-            return Response(data=f"푸시 알림 전송됨. 성공: {success}명, 실패: {faild}명, 전체 {len(subscribers)}명")
-        except Exception as e:
-            return ErrorResponse(error=str(e))
+    # with get_db() as db:
+    try:            
+        success, faild = 0, 0
+        
+        message = messaging.Message(
+            data={"title": notification.title, "body": notification.body},
+            topic="lunch"
+        )
+        messaging.send(message)
+        
+        return Response(data=f"푸시 알림 전송됨. 성공: {success}명, 실패: {faild}명, 전체 {len(subscribers)}명")
+    except Exception as e:
+        return ErrorResponse(error=str(e))
