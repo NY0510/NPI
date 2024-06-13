@@ -38,9 +38,7 @@ def authorize_request(request: Request):
 def send(
     notification: PushNotification = Body(...),
 ) -> Response | ErrorResponse:
-    try:            
-        success, faild = 0, 0
-        
+    try:
         message = messaging.Message(
             data={"title": notification.title, "body": notification.body},
             topic="lunch"
