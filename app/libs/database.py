@@ -1,8 +1,8 @@
 from pymongo import MongoClient
 
 class db:
-    def __init__(self, host, port, db_name):
-        self.client = MongoClient(host, port)
+    def __init__(self, url, db_name):
+        self.client = MongoClient(url)
         self.db = self.client[db_name]
     
     def insert(self, collection_name, data):
