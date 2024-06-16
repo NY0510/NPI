@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-class MondoDB:
+class db:
     def __init__(self, host, port, db_name):
         self.client = MongoClient(host, port)
         self.db = self.client[db_name]
