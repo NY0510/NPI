@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from app.routers import comcigan, snt_lunch, snt_schedule, slunch_noti
+from app.routers import comcigan, snt_lunch, snt_schedule, slunch_noti, slunch_comment
 
 load_dotenv()
 
@@ -23,6 +23,10 @@ tags_metadata = [
     {
         'name': 'Slunch 급식 알림',
         'description': 'Slunch의 급식 알림을 관리합니다.'
+    },
+    {
+        'name': 'Slunch 급식 댓글',
+        'description': 'Slunch의 급식 댓글을 관리합니다.'
     }
 ]
 
@@ -50,3 +54,4 @@ app.include_router(comcigan.router, prefix="/comcigan", tags=["컴시간"])
 app.include_router(snt_lunch.router, prefix="/snt_lunch", tags=["선린인터넷고 급식"])
 app.include_router(snt_schedule.router, prefix="/snt_schedule", tags=["선린인터넷고 학사일정"])
 app.include_router(slunch_noti.router, prefix="/slunch_noti", tags=["Slunch 급식 알림"])
+app.include_router(slunch_comment.router, prefix="/slunch_comment", tags=["Slunch 급식 댓글"])
