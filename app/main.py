@@ -32,7 +32,7 @@ app = FastAPI(
     version='0.1.0',
     contact={
         'name': 'NY64',
-        'url': 'https://ny64.net',
+        'url': 'https://ny64.kr',
         'email': 'me@ny64.kr'
     },
     redoc_url=None,
