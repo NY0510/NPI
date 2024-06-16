@@ -33,7 +33,7 @@ def lunch(
         else:
             date = f"{datetime.now().year}{month:02d}"
 
-        url = f"https://open.neis.go.kr/hub/mealServiceDietInfo?key={os.environ['NEIS_API_KEY']}&type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010536&MMEAL_SC_CODE=2&MLSV_YMD={date}"
+        url = f"https://open.neis.go.kr/hub/mealServiceDietInfo?key={os.getenv('NEIS_API_KEY')}&type=json&ATPT_OFCDC_SC_CODE=B10&SD_SCHUL_CODE=7010536&MMEAL_SC_CODE=2&MLSV_YMD={date}"
         response = get(url)
         data = response.json()
 

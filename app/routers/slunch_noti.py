@@ -16,7 +16,7 @@ class PushNotification(BaseModel):
     body: str
     
 def authorize_request(request: Request):
-    secret_key = os.environ["SECRET_KEY"]
+    secret_key = os.getenv("SECRET_KEY")
     header_key = request.headers.get("X-Secret-Key")
     if header_key != secret_key:
         raise HTTPException(status_code=403, detail="Not authorized")
