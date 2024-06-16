@@ -15,7 +15,6 @@ class PushNotification(BaseModel):
     title: str
     body: str
     
-
 def authorize_request(request: Request):
     secret_key = os.environ["SECRET_KEY"]
     header_key = request.headers.get("X-Secret-Key")
