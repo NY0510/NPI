@@ -7,7 +7,6 @@ import datetime
 from contextlib import contextmanager
 
 from .responses import ErrorResponse, Response
-from app.libs.database import Database
 
 router = APIRouter()
 firebase_admin.initialize_app(credentials.Certificate(os.path.join("app", "firebase-admin.json")))
@@ -16,13 +15,6 @@ class PushNotification(BaseModel):
     title: str
     body: str
     
-@contextmanager
-def get_db():
-    db = Database()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def authorize_request(request: Request):
     secret_key = os.environ["SECRET_KEY"]

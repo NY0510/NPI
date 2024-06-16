@@ -1,33 +1,21 @@
-import sqlite3
-import os
+from pymongo import MongoClient
 
-DB_NAME = os.path.join("app", 'database', 'db.sqlite3')
+class MondoDB:
+    def __init__(self, host, port, db_name):
+        self.client = MongoClient(host, port)
+        self.db = self.client[db_name]
+    
+    def insert(self, collection_name, data):
+        self.db[collection_name].insert_one(data)
 
-class Database:
-    def __init__(self, db_name = DB_NAME):
-        db_path = os.path.join(os.getcwd(), db_name)
-        self.conn = sqlite3.connect(db_path)
-        self.conn.row_factory = sqlite3.Row 
-        print(f"Connected to database {db_name} successfully.")
+    def find(self, collection_name, query):
+        return self.db[collection_name].find(query)
 
-    def execute(self, query, params=None):
-        cursor = self.conn.cursor()
-        if params is not None:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
-        self.conn.commit()
-        return cursor
+    def update(self, collection_name, query, data):
+        self.db[collection_name].update_one(query, {'$set': data})
+
+    def delete(self, collection_name, query):
+        self.db[collection_name].delete_one(query)
         
-    def fetchall(self, query, params=None):
-        cursor = self.execute(query, params)
-        return cursor.fetchall()
-
-    def fetchone(self, query, params=None):
-        cursor = self.execute(query, params)
-        return cursor.fetchone()
-
     def close(self):
-        self.conn.close()
-
-
+        self.client.close()
