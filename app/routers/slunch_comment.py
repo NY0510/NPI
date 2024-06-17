@@ -3,10 +3,12 @@ import os
 from bson.json_util import dumps
 import json
 import datetime
+from dotenv import load_dotenv
 
 from .responses import ErrorResponse, Response
 from app.libs.database import db
 
+load_dotenv()
 router = APIRouter()
 db = db(os.getenv("MONGODB_URL"), "slunch")
 

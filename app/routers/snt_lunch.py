@@ -5,9 +5,11 @@ import os
 import re
 from datetime import datetime
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 from .responses import ErrorResponse, Response
 
+load_dotenv()
 router = APIRouter()
 
 class LunchData(BaseModel):

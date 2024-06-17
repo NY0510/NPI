@@ -5,9 +5,11 @@ from firebase_admin import credentials, messaging
 import os
 import datetime
 from contextlib import contextmanager
+from dotenv import load_dotenv
 
 from .responses import ErrorResponse, Response
 
+load_dotenv()
 router = APIRouter()
 firebase_admin.initialize_app(credentials.Certificate(os.path.join("app", "firebase-admin.json")))
 
