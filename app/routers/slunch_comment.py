@@ -33,7 +33,7 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
     return Response(data=data)
 
 @router.post("")
-async def comment(request: Request, username: str = Body(...), comment: str = Body(...)):
+async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40)):
     today = datetime.datetime.now()
     
     db.insert("comments", {
