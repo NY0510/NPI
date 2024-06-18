@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Request, HTTPException, Depends, Body
+from fastapi import APIRouter, Query, Request, HTTPException, Depends, Body, Header
 import os
 from bson.json_util import dumps
 import json
@@ -33,13 +33,16 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
     return Response(data=data)
 
 @router.post("")
-async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40)):
+async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), x_real_ip: str = Header(None)):
     today = datetime.datetime.now()
+    
+    print(f"Comment from {x_real_ip}: {username} - {comment}")
     
     db.insert("comments", {
         "username": username,
         "comment": comment,
-        "date": today
+        "date": today,
+        "ip": x_real_ip
     })
     
-    return Response(data={"username": username, "comment": comment, "date": today})
+    return Response(data={"username": username, "comment": comment, "date": today, "ip": x_real_ip})
