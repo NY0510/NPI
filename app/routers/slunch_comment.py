@@ -3,6 +3,7 @@ import os
 from bson.json_util import dumps
 import json
 import datetime
+from typing import Optional
 from dotenv import load_dotenv
 
 from .responses import ErrorResponse, Response
@@ -33,7 +34,7 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
     return Response(data=data)
 
 @router.post("")
-async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), uuid: str = Body(default=None), x_real_ip: str = Header(None)):
+async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), uuid: Optional[str] = Body(None), x_real_ip: str = Header(None)):
     today = datetime.datetime.now()
     
     print(f"Comment from {x_real_ip}: {username} - {comment}")
