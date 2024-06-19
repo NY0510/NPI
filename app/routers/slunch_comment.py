@@ -33,7 +33,7 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
     return Response(data=data)
 
 @router.post("")
-async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), x_real_ip: str = Header(None)):
+async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), uuid: str=Body(...), x_real_ip: str = Header(None)):
     today = datetime.datetime.now()
     
     print(f"Comment from {x_real_ip}: {username} - {comment}")
@@ -42,7 +42,8 @@ async def comment(request: Request, username: str = Body(..., max_length=8), com
         "username": username,
         "comment": comment,
         "date": today,
-        "ip": x_real_ip
+        "ip": x_real_ip,
+        "uuid": uuid
     })
     
     return Response(data={"username": username, "comment": comment, "date": today, "ip": x_real_ip})
