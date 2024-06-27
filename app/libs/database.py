@@ -11,11 +11,15 @@ class db:
     def find(self, collection_name, query):
         return self.db[collection_name].find(query)
 
+    def find_one(self, collection_name, query):
+        return self.db[collection_name].find_one(query)
+    
     def update(self, collection_name, query, data):
         self.db[collection_name].update_one(query, {'$set': data})
 
     def delete(self, collection_name, query):
         self.db[collection_name].delete_one(query)
+        
         
     def close(self):
         self.client.close()
