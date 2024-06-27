@@ -35,8 +35,14 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
 
 @router.post("")
 async def comment(request: Request, username: str = Body(..., max_length=8), comment: str = Body(..., max_length=40), uuid: Optional[str] = Body(None), x_real_ip: str = Header(None)):
-    if uuid is not None and db.find_one("blocked_uuids", {"uuid": uuid}) is not None:
-        raise HTTPException(status_code=403, detail="You are banned from commenting")
+    if uuid is not None:
+        thirty_seconds_ago = datetime.now() - timedelta(seconds=30)
+
+        if db.find_one("blocked_uuids", {"uuid": uuid}) is not None:
+            raise HTTPException(status_code=403, detail="You are banned from commenting")
+        
+        if db.find_one("comments", {"uuid": uuid, "date": {"$gte": thirty_seconds_ago}}):
+            raise HTTPException(status_code=429, detail="You are commenting too fast")
     
     today = datetime.datetime.now()
     
