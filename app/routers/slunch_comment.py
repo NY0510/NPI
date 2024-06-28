@@ -15,9 +15,9 @@ db = db(os.getenv("MONGODB_URL"), "slunch")
 
 @router.get("")
 async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, le=100)):
-    today = datetime.datetime.now().date()
-    start_of_day = datetime.datetime(today.year, today.month, today.day, 0, 0, 0, 0)
-    end_of_day = datetime.datetime(today.year, today.month, today.day, 23, 59, 59, 999999)
+    today = datetime.now().date()
+    start_of_day = datetime(today.year, today.month, today.day, 0, 0, 0, 0)
+    end_of_day = datetime(today.year, today.month, today.day, 23, 59, 59, 999999)
     
     comments = db.find("comments", {"date": {"$gte": start_of_day, "$lt": end_of_day}}).sort("date", -1)
     comments = comments.skip((page - 1) * page_size).limit(page_size)
