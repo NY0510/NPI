@@ -41,3 +41,5 @@ __pycache__/
 firebase-admin.json
 *.sqlite3
 timetable.json
+
+test.py
