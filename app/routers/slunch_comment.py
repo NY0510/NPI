@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Request, HTTPException, Depends, Body, Hea
 import os
 from bson.json_util import dumps
 import json
-import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -44,7 +44,7 @@ async def comment(request: Request, username: str = Body(..., max_length=8), com
         if db.find_one("comments", {"uuid": uuid, "date": {"$gte": thirty_seconds_ago}}):
             raise HTTPException(status_code=429, detail="You are commenting too fast")
     
-    today = datetime.datetime.now()
+    today = datetime.now()
     
     print(f"Comment from {x_real_ip}: {username} - {comment}")
     
