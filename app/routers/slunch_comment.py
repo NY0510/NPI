@@ -64,6 +64,8 @@ async def comment(request: Request,
     
     # Check if user is banned
     if db.find_one("blocked_uuids", {"uuid": x_uuid}):
+        print(f"Banned user {x_uuid} tried to comment")
+        db.update("blocked_uuids", {"uuid": x_uuid}, {"$inc": {"count": 1}})
         raise HTTPException(status_code=403, detail="You are banned from commenting")
 
     # Check if user is commenting too fast
