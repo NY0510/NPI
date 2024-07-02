@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import hashlib
 import hmac
 from bson import ObjectId
+import re
 
 from .responses import ErrorResponse, Response
 from app.libs.database import db
