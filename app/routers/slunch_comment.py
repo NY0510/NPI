@@ -52,7 +52,7 @@ def check_non_normal_unicode(text: str) -> bool:
     # U+00A0, U+2002, U+2003, U+2009, U+200A, U+200B, U+202F, U+205F, U+3000, U+FEFF, U+0009
     blank_chars = r"[\u00A0\u2002\u2003\u2009\u200A\u200B\u202F\u205F\u3000\uFEFF\u0009]"
     
-    if re.search(non_normal_unicode, text) or re.search(blank_chars, text):
+    if re.search(non_normal_unicode, text) or not re.search(blank_chars, text):
         return True
 
 @router.get("", response_model=List[CommentResponse])
