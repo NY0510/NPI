@@ -7,6 +7,7 @@ from typing import Optional
 from dotenv import load_dotenv
 import hashlib
 import hmac
+from bson import ObjectId
 
 from .responses import ErrorResponse, Response
 from app.libs.database import db
@@ -42,7 +43,9 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
         data.append({
             "username": comment["username"],
             "comment": comment["comment"],
-            "date": comment["date"]
+            "date": comment["date"],
+            "uuid": comment["uuid"],
+            "id": str(comment["_id"])
         })
     
     return Response(data=data)
@@ -99,3 +102,41 @@ async def comment(request: Request,
     })
 
     return {"username": username, "comment": comment, "date": today, "ip": x_real_ip}
+
+@router.put("/{comment_id}")
+async def update_comment(comment_id: str, comment: str = Body(..., max_length=40), x_uuid: str = Header(None), x_timestamp: int = Header(-1), x_signature: str = Header(None)):
+    if x_timestamp == -1:
+        raise HTTPException(status_code=403, detail="Missing headers")
+    
+    thirty_seconds_ago = datetime.now() - timedelta(seconds=30)
+    server_timestamp = int(datetime.now().timestamp() * 1000)
+    
+    # Check if user is banned
+    if db.find_one("blocked_uuids", {"uuid": x_uuid}):
+        print(f"Banned user {x_uuid} tried to update comment")
+        db.update("blocked_uuids", {"uuid": x_uuid}, {"$inc": {"count": 1}})
+        raise HTTPException(status_code=403, detail="You are banned from updating comments")
+
+    # Check if user is updating too fast
+    if db.find_one("comments", {"uuid": x_uuid, "date": {"$gte": thirty_seconds_ago}}):
+        raise HTTPException(status_code=429, detail="You are updating too fast")
+
+    # Validate timestamp
+    if abs(server_timestamp - x_timestamp) > 30000:
+        raise HTTPException(status_code=403, detail="Invalid timestamp")
+
+    # Validate signature
+    secret_key = os.getenv("SECRET_KEY")
+    server_signature = generate_signature(x_uuid, x_timestamp, secret_key)
+    if x_signature != server_signature:
+        raise HTTPException(status_code=403, detail="Invalid signature")
+
+    # Check if comment exists
+    existing_comment = db.find_one("comments", {"_id": ObjectId(comment_id)})  # Corrected line
+    if not existing_comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Update comment
+    db.update_one("comments", {"_id": ObjectId(comment_id)}, {"$set": {"comment": comment}})
+    
+    return {"username": existing_comment["username"], "comment": comment, "date": existing_comment["date"], "ip": existing_comment["ip"]}
