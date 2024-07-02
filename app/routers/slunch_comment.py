@@ -46,7 +46,8 @@ async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, l
             "comment": comment["comment"],
             "date": comment["date"],
             "uuid": comment["uuid"],
-            "id": str(comment["_id"])
+            "id": str(comment["_id"]),
+            "edited": comment.get("edited", False)
         })
     
     return Response(data=data)
@@ -138,6 +139,6 @@ async def update_comment(comment_id: str, comment: str = Body(..., max_length=40
         raise HTTPException(status_code=404, detail="Comment not found")
 
     # Update comment
-    db.update_one("comments", {"_id": ObjectId(comment_id)}, {"$set": {"comment": comment}})
+    db.update_one("comments", {"_id": ObjectId(comment_id)}, {"$set": {"comment": comment, "edited": True}})
     
     return {"username": existing_comment["username"], "comment": comment, "date": existing_comment["date"], "ip": existing_comment["ip"]}
