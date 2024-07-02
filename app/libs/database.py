@@ -16,9 +16,15 @@ class db:
     
     def update(self, collection_name, query, data):
         self.db[collection_name].update_one(query, {'$set': data})
+    
+    def update_one(self, collection_name, query, data):
+        self.db[collection_name].update_one(query, data)
 
     def delete(self, collection_name, query):
         self.db[collection_name].delete_one(query)
+        
+    def delete_many(self, collection_name, query):
+        self.db[collection_name].delete_many(query)
         
     def close(self):
         self.client.close()
