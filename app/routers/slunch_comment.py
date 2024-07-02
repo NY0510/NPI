@@ -9,8 +9,6 @@ import hashlib
 import hmac
 from bson import ObjectId
 import re
-from typing import List, Annotated, Optional
-from pydantic import BaseModel, Field
 
 from .responses import ErrorResponse, Response
 from app.libs.database import db
@@ -19,28 +17,6 @@ load_dotenv()
 router = APIRouter()
 db = db(os.getenv("MONGODB_URL"), "slunch")
 
-class CreateCommentRequest(BaseModel):
-    username: str = Field(..., max_length=8)
-    comment: str = Field(..., max_length=40)
-
-class UpdateCommentRequest(BaseModel):
-    comment: str = Field(..., max_length=40)
-
-# Response models
-class CommentResponse(BaseModel):
-    username: str
-    comment: str
-    date: datetime
-    uuid: str
-    id: str
-    edited: bool
-
-class CommentCreateResponse(BaseModel):
-    username: str
-    comment: str
-    date: datetime
-    ip: str
-    
 # HMAC-SHA256 서명 생성 
 def generate_signature(uuid: str, timestamp: int, secret_key: str) -> str:
     message = f"{uuid}:{timestamp}"
@@ -51,11 +27,11 @@ def check_non_normal_unicode(text: str) -> bool:
     non_normal_unicode = r"[\uD800-\uDFFF\uDC00-\uDFFF\uFEFF]"
     blank_chars = r"[\u00A0\u2002\u2003\u2009\u200A\u200B\u202F\u205F\u3000\uFEFF\u0009]"
     
-    if re.search(non_normal_unicode, text):
+    if re.search(non_normal_unicode, text) or re.search(blank_chars, text):
         return True
-
-@router.get("", response_model=List[CommentResponse])
-async def get_comments(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, le=100)):
+    
+@router.get("")
+async def comment(page: int = Query(1, gt=0), page_size: int = Query(10, gt=0, le=100)):
     today = datetime.now().date()
     start_of_day = datetime(today.year, today.month, today.day, 0, 0, 0, 0)
     end_of_day = datetime(today.year, today.month, today.day, 23, 59, 59, 999999)
@@ -75,11 +51,12 @@ async def get_comments(page: int = Query(1, gt=0), page_size: int = Query(10, gt
             "edited": comment.get("edited", False)
         })
     
-    return data
+    return Response(data=data)
 
-@router.post("", response_model=CommentCreateResponse)
-async def create_comment(request: Request, 
-                  create_request: CreateCommentRequest,
+@router.post("")
+async def comment(request: Request, 
+                  username: str = Body(..., max_length=8),
+                  comment: str = Body(..., max_length=40),
                   x_uuid: str = Header(None),
                   x_timestamp: int = Header(None),
                   x_signature: str = Header(None),
@@ -112,25 +89,25 @@ async def create_comment(request: Request,
         raise HTTPException(status_code=403, detail="Invalid signature")
     
     # Check if username or comment contains non-normal unicode characters
-    if check_non_normal_unicode(create_request.username) or check_non_normal_unicode(create_request.comment):
+    if check_non_normal_unicode(username) or check_non_normal_unicode(comment):
         raise HTTPException(status_code=403, detail="Non-normal unicode characters are not allowed")
 
     today = datetime.now()
-    print(f"Comment from {x_real_ip}: {create_request.username} - {create_request.comment}")
+    print(f"Comment from {x_real_ip}: {username} - {comment}")
 
     # Save comment to database
     db.insert("comments", {
-        "username": create_request.username,
-        "comment": create_request.comment,
+        "username": username,
+        "comment": comment,
         "date": today,
         "ip": x_real_ip,
         "uuid": x_uuid
     })
 
-    return {"username": create_request.username, "comment": create_request.comment, "date": today, "ip": x_real_ip}
+    return {"username": username, "comment": comment, "date": today, "ip": x_real_ip}
 
-@router.put("/{comment_id}", response_model=CommentResponse)
-async def update_comment(comment_id: str, update_request: UpdateCommentRequest, x_uuid: str = Header(None), x_timestamp: int = Header(-1), x_signature: str = Header(None)):
+@router.put("/{comment_id}")
+async def update_comment(comment_id: str, comment: str = Body(..., max_length=40), x_uuid: str = Header(None), x_timestamp: int = Header(-1), x_signature: str = Header(None)):
     if x_timestamp == -1:
         raise HTTPException(status_code=403, detail="Missing headers")
     
@@ -163,6 +140,6 @@ async def update_comment(comment_id: str, update_request: UpdateCommentRequest, 
         raise HTTPException(status_code=404, detail="Comment not found")
 
     # Update comment
-    db.update_one("comments", {"_id": ObjectId(comment_id)}, {"$set": {"comment": update_request.comment, "edited": True}})
+    db.update_one("comments", {"_id": ObjectId(comment_id)}, {"$set": {"comment": comment, "edited": True}})
     
-    return {"username": existing_comment["username"], "comment": update_request.comment, "date": existing_comment["date"], "ip": existing_comment["ip"], "uuid": x_uuid, "id": str(existing_comment["_id"]), "edited": True}
+    return {"username": existing_comment["username"], "comment": comment, "date": existing_comment["date"], "ip": existing_comment["ip"]}
