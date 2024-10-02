@@ -18,7 +18,7 @@ class LunchData(BaseModel):
 
 class LunchResponse(BaseModel):
     success: bool = Field(description="성공 여부", example=True)
-    data: Optional[List[dict[str, str | List[str]]]] = Field(description="급식 정보")
+    data: Optional[List[LunchData]] = Field(description="급식 정보")
 
 
 @router.get("", responses = {
@@ -45,9 +45,11 @@ def lunch(
         results = []
         for row in data['mealServiceDietInfo'][1]['row']:
             menu = row['DDISH_NM']
-            result = {"date": row['MLSV_YMD'], "menu": [re.sub(r'\s*\([^)]*\)', '', item.strip()) for item in menu.split('<br/>')]} # 괄호 안 내용 및 공백 제거 후 리스트로 변환
-            
-            results.append(result)
+            lunch_data = LunchData(
+                date=row['MLSV_YMD'],
+                menu=[re.sub(r'\s*\([^)]*\)', '', item.strip()) for item in menu.split('<br/>')]
+            )
+            results.append(lunch_data)
         
         return LunchResponse(success=True, data=results)
         

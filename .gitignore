@@ -43,3 +43,4 @@ firebase-admin.json
 timetable.json
 
 test.py
+.venv
