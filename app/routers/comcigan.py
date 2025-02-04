@@ -36,18 +36,28 @@ class SchoolSearchResponse(BaseModel):
     success: bool = Field(description="성공 여부", example=True)
     data: List[SchoolInfo] = Field(description="학교 검색 결과", example=[{"name":"선린중학교","period":"서울","code":24966},{"name":"선린인터넷고","period":"서울","code":24966}])
 
+class HomeroomResponse(BaseModel):
+    success: bool = Field(description="성공 여부", example=True)
+    data: str = Field(description="담임 선생님", example="김환*")
 
-def get_timetable(school_name: str, school_grade: int, school_class: int, next_week: bool) -> Response | ErrorResponse:
+
+def get_timetable(school_name: str, school_grade: int, school_class: int, next_week: bool, school_code: Optional[int] = None) -> Response | ErrorResponse:
     try:
-        timetable = TimeTable(school_name, 1 if next_week else 0)
+        if school_code is None:
+            timetable = TimeTable(school_name, 1 if next_week else 0)
+        else:
+            timetable = TimeTable(school_name, 1 if next_week else 0, school_code=school_code)
         del timetable.timetable[school_grade][school_class][0] # 0번째 인덱스에 빈 배열 제거
         return Response(data=timetable.timetable[school_grade][school_class])
     except Exception as e:
         return ErrorResponse(error=str(e))
 
-def get_classlist(school_name: str) -> Response | ErrorResponse:
+def get_classlist(school_name: str, school_code: Optional[int] = None) -> Response | ErrorResponse:
     try:
-        timetable = TimeTable(school_name, 0)
+        if school_code is None:
+            timetable = TimeTable(school_name, 0)
+        else:
+            timetable = TimeTable(school_name, 0, school_code=school_code)
         class_list = [f"{grade}-{_class}" for grade, grade_data in enumerate(timetable.timetable) for _class, class_data in enumerate(grade_data) if class_data]
         return Response(data=class_list)
     except Exception as e:
@@ -56,8 +66,20 @@ def get_classlist(school_name: str) -> Response | ErrorResponse:
 def search_school(school_name: str) -> Response | ErrorResponse:
     try:
         search_results = get_school_code(school_name)
-        filtered_results = [{'name': result[2], 'period': result[1], 'code': result[0]} for result in search_results if result[0] != 0] # code가 0인 학교는 제외
+        print(search_results)
+        filtered_results = [{'name': result[2], 'period': result[1], 'code': result[3]} for result in search_results if result[0] != 0] # code가 0인 학교는 제외
         return Response(data=filtered_results)
+    except Exception as e:
+        return ErrorResponse(error=str(e))
+
+def get_homeroom_teacher(school_name: str, school_grade: int, school_class: int, school_code: Optional[int] = None) -> Response | ErrorResponse:
+    try:
+        if school_code is None:
+            timetable = TimeTable(school_name, 0)
+        else:
+            timetable = TimeTable(school_name, 0, school_code=school_code)
+        homeroom_teacher = timetable.homeroom(school_grade, school_class)
+        return Response(data=homeroom_teacher)
     except Exception as e:
         return ErrorResponse(error=str(e))
 
@@ -68,17 +90,19 @@ def timetable(
     school_name: Annotated[str, Query(description="학교 이름\n\n중복되는 학교가 없을 경우 일부만 입력해도 자동으로 선택됩니다.")],
     school_grade: Annotated[int, Query(description="학년")],
     school_class: Annotated[int, Query(description="반")],
-    next_week: Annotated[bool, Query(description="다음 주 시간표를 가져올지 여부")] = False
+    next_week: Annotated[bool, Query(description="다음 주 시간표를 가져올지 여부")] = False,
+    school_code: Annotated[Optional[int], Query(description="학교 코드")] = None
 ) -> TimetableResponse | ErrorResponse:
-    return get_timetable(school_name, school_grade, school_class, next_week)
+    return get_timetable(school_name, school_grade, school_class, next_week, school_code)
 
 @router.get('/classlist', responses = {
     200: {"model": ClasslistResponse, "description": "반 리스트 조회 성공"}, 400: {"model": ErrorResponse, "description": "반 리스트 조회 실패"}
 })
 def classlist(
-    school_name: Annotated[str, Query(description="학교 이름\n\n중복되는 학교가 없을 경우 일부만 입력해도 자동으로 선택됩니다.")]
+    school_name: Annotated[str, Query(description="학교 이름\n\n중복되는 학교가 없을 경우 일부만 입력해도 자동으로 선택됩니다.")],
+    school_code: Annotated[Optional[int], Query(description="학교 코드")] = None
 ) -> ClasslistResponse | ErrorResponse:
-    return get_classlist(school_name)
+    return get_classlist(school_name, school_code)
 
 @router.get('/search', responses = {
     200: {"model": SchoolSearchResponse, "description": "학교 검색 성공"}, 400: {"model": ErrorResponse, "description": "학교 검색 실패"}
@@ -86,3 +110,14 @@ def classlist(
 def search(school_name: Annotated[str, Query(description="학교 이름\n\n중복되는 학교가 없을 경우 일부만 입력해도 자동으로 선택됩니다.")]
 ) -> SchoolSearchResponse | ErrorResponse:
     return search_school(school_name)
+
+@router.get("/homeroom", responses = {
+    200: {"model": HomeroomResponse, "description": "담임 선생님 조회 성공"}, 400: {"model": ErrorResponse, "description": "담임 선생님 조회 실패"}
+})
+def homeroom(
+    school_name: Annotated[str, Query(description="학교 이름\n\n중복되는 학교가 없을 경우 일부만 입력해도 자동으로 선택됩니다.")],
+    school_grade: Annotated[int, Query(description="학년")],
+    school_class: Annotated[int, Query(description="반")],
+    school_code: Annotated[Optional[int], Query(description="학교 코드")] = None
+) -> HomeroomResponse | ErrorResponse:
+    return get_homeroom_teacher(school_name, school_grade, school_class, school_code)
